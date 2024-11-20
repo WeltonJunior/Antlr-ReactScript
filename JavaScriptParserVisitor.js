@@ -120,6 +120,30 @@ export default class JavaScriptParserVisitor extends antlr4.tree.ParseTreeVisito
 	}
 
 
+	// Visit a parse tree produced by JavaScriptParser#stateDeclaration.
+	visitStateDeclaration(ctx) {
+	  return this.visitChildren(ctx);
+	}
+
+
+	// Visit a parse tree produced by JavaScriptParser#refDeclaration.
+	visitRefDeclaration(ctx) {
+	  return this.visitChildren(ctx);
+	}
+
+
+	// Visit a parse tree produced by JavaScriptParser#effectStatement.
+	visitEffectStatement(ctx) {
+	  return this.visitChildren(ctx);
+	}
+
+
+	// Visit a parse tree produced by JavaScriptParser#componentDeclaration.
+	visitComponentDeclaration(ctx) {
+	  return this.visitChildren(ctx);
+	}
+
+
 	// Visit a parse tree produced by JavaScriptParser#emptyStatement_.
 	visitEmptyStatement_(ctx) {
 	  return this.visitChildren(ctx);

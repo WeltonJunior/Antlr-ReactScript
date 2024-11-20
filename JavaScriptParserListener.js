@@ -176,6 +176,42 @@ export default class JavaScriptParserListener extends antlr4.tree.ParseTreeListe
 	}
 
 
+	// Enter a parse tree produced by JavaScriptParser#stateDeclaration.
+	enterStateDeclaration(ctx) {
+	}
+
+	// Exit a parse tree produced by JavaScriptParser#stateDeclaration.
+	exitStateDeclaration(ctx) {
+	}
+
+
+	// Enter a parse tree produced by JavaScriptParser#refDeclaration.
+	enterRefDeclaration(ctx) {
+	}
+
+	// Exit a parse tree produced by JavaScriptParser#refDeclaration.
+	exitRefDeclaration(ctx) {
+	}
+
+
+	// Enter a parse tree produced by JavaScriptParser#effectStatement.
+	enterEffectStatement(ctx) {
+	}
+
+	// Exit a parse tree produced by JavaScriptParser#effectStatement.
+	exitEffectStatement(ctx) {
+	}
+
+
+	// Enter a parse tree produced by JavaScriptParser#componentDeclaration.
+	enterComponentDeclaration(ctx) {
+	}
+
+	// Exit a parse tree produced by JavaScriptParser#componentDeclaration.
+	exitComponentDeclaration(ctx) {
+	}
+
+
 	// Enter a parse tree produced by JavaScriptParser#emptyStatement_.
 	enterEmptyStatement_(ctx) {
 	}

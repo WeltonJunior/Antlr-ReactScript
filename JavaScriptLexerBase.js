@@ -2,38 +2,44 @@ import antlr4 from 'antlr4';
 import JavaScriptLexer from './JavaScriptLexer.js';
 
 export default class JavaScriptLexerBase extends antlr4.Lexer {
-
     constructor(input) {
         super(input);
         this.scopeStrictModes = new Array();
         this.lastToken = null;
         this.useStrictDefault = false;
         this.useStrictCurrent = false;
-        this.currentDepth = 0;
+        this.currentDepth = 0; // Profundidade de blocos
+        this.templateDepth = 0; // Profundidade de templates JSX
         this.templateDepthStack = new Array();
     }
 
+    // Verifica se está no início do arquivo
+    IsStartOfFile() {
+        return this.lastToken === null;
+    }
+
+    // Obtém o valor padrão do modo estrito
     getStrictDefault() {
         return this.useStrictDefault;
     }
 
+    // Define o valor padrão do modo estrito
     setUseStrictDefault(value) {
         this.useStrictDefault = value;
         this.useStrictCurrent = value;
     }
 
+    // Verifica se está no modo estrito
     IsStrictMode() {
         return this.useStrictCurrent;
     }
 
+    // Verifica se está dentro de uma string template
     IsInTemplateString() {
-        return this.templateDepthStack.length > 0 && this.templateDepthStack[this.templateDepthStack.length - 1] === this.currentDepth;
+        return this.templateDepth > 0;
     }
 
-    getCurrentToken() {
-        return this.nextToken();
-    }
-
+    // Obtém o próximo token e ajusta o estado do lexer
     nextToken() {
         var next = super.nextToken();
 
@@ -43,6 +49,7 @@ export default class JavaScriptLexerBase extends antlr4.Lexer {
         return next;
     }
 
+    // Aumenta a profundidade de blocos
     ProcessOpenBrace() {
         this.currentDepth++;
         this.useStrictCurrent =
@@ -52,6 +59,7 @@ export default class JavaScriptLexerBase extends antlr4.Lexer {
         this.scopeStrictModes.push(this.useStrictCurrent);
     }
 
+    // Diminui a profundidade de blocos
     ProcessCloseBrace() {
         this.useStrictCurrent =
             this.scopeStrictModes.length > 0
@@ -60,9 +68,9 @@ export default class JavaScriptLexerBase extends antlr4.Lexer {
         this.currentDepth--;
     }
 
+    // Processa literais de string para modo estrito
     ProcessStringLiteral() {
-        if (this.lastToken === null ||
-                this.lastToken.type === JavaScriptLexer.OpenBrace) {
+        if (this.lastToken === null || this.lastToken.type === JavaScriptLexer.OpenBrace) {
             if (super.text === '"use strict"' || super.text === "'use strict'") {
                 if (this.scopeStrictModes.length > 0) {
                     this.scopeStrictModes.pop();
@@ -73,16 +81,17 @@ export default class JavaScriptLexerBase extends antlr4.Lexer {
         }
     }
 
-    ProcessTemplateOpenBrace() {
-        this.currentDepth++;
-        this.templateDepthStack.push(this.currentDepth);
+    // Aumenta a profundidade de templates
+    IncreaseTemplateDepth() {
+        this.templateDepth++;
     }
 
-    ProcessTemplateCloseBrace() {
-        this.templateDepthStack.pop();
-        this.currentDepth--;
+    // Diminui a profundidade de templates
+    DecreaseTemplateDepth() {
+        this.templateDepth--;
     }
 
+    // Verifica se um regex é possível no contexto atual
     IsRegexPossible() {
         if (this.lastToken === null) {
             return true;
@@ -107,16 +116,39 @@ export default class JavaScriptLexerBase extends antlr4.Lexer {
         }
     }
 
-    IsStartOfFile() {
-        return this.lastToken === null;
+    // Verifica se JSX é possível no contexto atual
+    IsJsxPossible() {
+        if (this.lastToken === null) {
+            return false;
+        }
+
+        switch (this.lastToken.type) {
+            case JavaScriptLexer.Assign:
+            case JavaScriptLexer.Colon:
+            case JavaScriptLexer.Comma:
+            case JavaScriptLexer.Default:
+            case JavaScriptLexer.QuestionMark:
+            case JavaScriptLexer.Return:
+            case JavaScriptLexer.OpenBrace:
+            case JavaScriptLexer.OpenParen:
+            case JavaScriptLexer.JsxOpeningElementOpenBrace:
+            case JavaScriptLexer.JsxChildrenOpenBrace:
+            case JavaScriptLexer.Yield:
+            case JavaScriptLexer.ARROW:
+                return true;
+            default:
+                return false;
+        }
     }
 
+    // Reinicia o estado do lexer
     reset() {
         this.scopeStrictModes = new Array();
         this.lastToken = null;
         this.useStrictDefault = false;
         this.useStrictCurrent = false;
         this.currentDepth = 0;
+        this.templateDepth = 0;
         this.templateDepthStack = new Array();
         super.reset();
     }

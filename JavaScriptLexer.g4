@@ -165,16 +165,22 @@ YieldStar  : 'yield*';
 
 /// Future Reserved Words
 
-Class   : 'class';
-Enum    : 'enum';
-Extends : 'extends';
-Super   : 'super';
-Const   : 'const';
-Export  : 'export';
-Import  : 'import';
+Class     : 'class';
+Enum      : 'enum';
+Extends   : 'extends';
+Super     : 'super';
+Const     : 'const';
+Export    : 'export';
+Import    : 'import';
+Async     : 'async';
+Await     : 'await';
 
-Async : 'async';
-Await : 'await';
+/// Novos tokens em maiúsculas
+
+STATE     : 'state';     // Novo
+EFFECT    : 'effect';    // Novo
+REF       : 'ref';       // Novo
+COMPONENT : 'component'; // Novo
 
 /// The following tokens are also considered to be FutureReservedWords
 /// when parsing strict mode

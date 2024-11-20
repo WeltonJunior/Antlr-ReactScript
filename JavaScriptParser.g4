@@ -69,6 +69,10 @@ statement
     | tryStatement
     | debuggerStatement
     | functionDeclaration
+    | stateDeclaration      // Novo
+    | refDeclaration        // Novo
+    | effectStatement       // Novo
+    | componentDeclaration  // Novo
     ;
 
 block
@@ -134,6 +138,22 @@ variableDeclarationList
 
 variableDeclaration
     : assignable (Assign singleExpression)? // ECMAScript 6: Array & Object Matching
+    ;
+
+stateDeclaration
+    : STATE assignable (Assign singleExpression)? eos
+    ;
+
+refDeclaration
+    : REF assignable (Assign singleExpression)? eos
+    ;
+
+effectStatement
+    : EFFECT (OpenBracket expressionSequence? CloseBracket)? block
+    ;
+
+componentDeclaration
+    : COMPONENT identifier '(' formalParameterList? ')' block
     ;
 
 emptyStatement_
@@ -592,6 +612,10 @@ keyword
     | Await
     | From
     | As
+    | STATE     // Novo
+    | EFFECT    // Novo
+    | REF       // Novo
+    | COMPONENT // Novo
     ;
 
 let_
