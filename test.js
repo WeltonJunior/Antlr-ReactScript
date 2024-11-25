@@ -32,7 +32,7 @@ component App() {
     return (
         <div ref={elemento}>
             <h1>Bem-vindo ao ReactScript!</h1>
-            <Contador />
+            
         </div>
     );
 }

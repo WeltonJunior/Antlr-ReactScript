@@ -40,6 +40,12 @@ class ReactScriptTranspiler extends JavaScriptParserVisitor {
             ? this.visit(ctx.singleExpression())
             : 'undefined';
 
+        if (!this.stateVariables) {
+            this.stateVariables = new Set();
+        }
+        this.stateVariables.add(variableName);
+            
+
         const code = `const [${variableName}, set${capitalize(variableName)}] = React.useState(${initialValue});`;
         return code;
     }
@@ -165,8 +171,16 @@ class ReactScriptTranspiler extends JavaScriptParserVisitor {
 
     visitPostIncrementExpression(ctx) {
         const expression = this.visit(ctx.singleExpression());
+        if (this.isStateVariable(expression)) {
+            const setter = `set${capitalize(expression)}`;
+            return `${setter}(${expression} + 1)`; 
+        }
         return `${expression}++`;
     }
+    
+    isStateVariable(variable) {
+        return this.stateVariables && this.stateVariables.has(variable);
+    }         
 
     visitPostDecreaseExpression(ctx) {
         const expression = this.visit(ctx.singleExpression());
@@ -273,13 +287,17 @@ class ReactScriptTranspiler extends JavaScriptParserVisitor {
         return ctx.getText();
     }
 
-    visitJsxElement(ctx) {
+    visitJsxElement(ctx, level = 1) {
         const opening = this.visit(ctx.jsxOpeningElement());
-        const children = ctx.jsxChildren() ? this.visit(ctx.jsxChildren()) : '';
+        const children = ctx.jsxChildren()
+            ? this.visitJsxChildren(ctx.jsxChildren(), level + 1)
+            : '';
         const closing = this.visit(ctx.jsxClosingElement());
-        return `${opening}${children}${closing}`;
+        const indent = '  '.repeat(level);
+    
+        return `${indent}${opening}\n${children}\n${indent}${closing}`;
     }
-
+    
     visitJsxSelfClosingElement(ctx) {
         const name = this.visit(ctx.jsxSelfClosingElementName());
         const attributes = ctx.jsxAttributes() ? ' ' + this.visit(ctx.jsxAttributes()) : '';
@@ -288,7 +306,9 @@ class ReactScriptTranspiler extends JavaScriptParserVisitor {
 
     visitJsxOpeningElement(ctx) {
         const name = this.visit(ctx.jsxOpeningElementName());
-        const attributes = ctx.jsxAttributes() ? ' ' + this.visit(ctx.jsxAttributes()) : '';
+        const attributes = ctx.jsxAttributes()
+            ? ' ' + this.visit(ctx.jsxAttributes()).trim()
+            : '';
         return `<${name}${attributes}>`;
     }
 
@@ -318,27 +338,85 @@ class ReactScriptTranspiler extends JavaScriptParserVisitor {
         } else if (ctx.jsxElement()) {
             return `{${this.visit(ctx.jsxElement())}}`;
         } else if (ctx.objectExpressionSequence()) {
-            return `{${this.visit(ctx.objectExpressionSequence())}}`;
+            const expression = this.visit(ctx.objectExpressionSequence());
+            return `{${this.transformExpression(expression)}}`;
         } else {
             return ctx.getText();
         }
     }
 
-    visitJsxChildren(ctx) {
-        const children = toArray(ctx.children);
-        return children.map(child => {
-            if (child.jsxText) {
-                return child.getText();
-            } else if (child.jsxExpression) {
-                return `{${this.visit(child.jsxExpression().expressionSequence())}}`;
-            } else if (child.jsxElement) {
-                return this.visit(child.jsxElement());
-            } else {
-                return child.getText();
-            }
-        }).join('');
+    transformExpression(expression) {
+        if (expression.includes('++')) {
+            return this.transformIncrement(expression);
+        } else if (expression.includes('--')) {
+            return this.transformDecrement(expression);
+        }
+        return expression;
     }
 
+    visitJsxChildren(ctx, level = 1) {
+    const children = toArray(ctx.children);
+    const indent = '  '.repeat(level);
+
+    children.forEach((child, index) => {
+        console.log(`Child ${index}:`, child.constructor.name, child.getText());
+    });
+
+    return children
+        .map(child => {
+            if (!child) return ''; // Nó inválido
+            if (child.constructor.name === 'Fe') {
+                // Texto puro
+                return `${indent}${child.symbol.text.trim()}`;
+            } else if (child.constructor.name === 'ObjectExpressionSequenceContext') {
+                // Expressões como {contador}
+                const expression = this.visit(child.expressionSequence());
+                return `${indent}{${expression}}`;
+            } else if (child.constructor.name === 'JsxElementContext') {
+                // Elementos aninhados
+                return this.visitJsxElement(child, level);
+            }
+            return ''; // Ignorar outros tipos de nós
+        })
+        .join('\n');
+    }
+ 
+    transformIncrement(expression) {
+        // Regex para localizar incrementos ou decrementos dentro de uma expressão
+        const match = expression.match(/(\w+)\s*(\+\+)/);
+        
+        if (match) {
+            const variable = match[1]; // Nome da variável
+            if (this.isStateVariable(variable)) {
+                const setter = `set${capitalize(variable)}`;
+                return expression.replace(
+                    /(\w+)\s*(\+\+)/, // Substitui "variavel++"
+                    `${setter}(${variable} + 1)`
+                );
+            }
+        }
+    
+        return expression; // Retorna a expressão original se não houver correspondência
+    }
+
+    transformDecrement(expression) {
+        // Regex para localizar decrementos dentro de uma expressão
+        const match = expression.match(/(\w+)\s*(--)/);
+        
+        if (match) {
+            const variable = match[1]; // Nome da variável
+            if (this.isStateVariable(variable)) {
+                const setter = `set${capitalize(variable)}`;
+                return expression.replace(
+                    /(\w+)\s*(--)/, // Substitui "variavel--"
+                    `${setter}(${variable} - 1)`
+                );
+            }
+        }
+    
+        return expression; // Retorna a expressão original se não houver correspondência
+    }
+    
     visitJsxOpeningElementName(ctx) {
         return ctx.getText();
     }
