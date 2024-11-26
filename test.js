@@ -6,7 +6,7 @@ import JavaScriptParserVisitor from './JavaScriptParserVisitor.js';
 import ReactScriptTranspiler from './ReactScriptTranspiler.js';
 
 const input = `
-component Contador() {
+component Contador(numero) {
     state contador = 0;
 
     effect [contador] {
@@ -16,7 +16,12 @@ component Contador() {
     return (
         <div>
             <h1>Contador: {contador}</h1>
-            <button onClick={() => contador++}>Incrementar</button>
+            <button onClick={() => contador++}>
+                Incrementar
+            </button>
+            <button onClick={() => contador--}>
+                Decrementar
+            </button>
         </div>
     );
 }
@@ -32,7 +37,8 @@ component App() {
     return (
         <div ref={elemento}>
             <h1>Bem-vindo ao ReactScript!</h1>
-            <Contador />
+            <br />
+            <Contador numero=1/>
         </div>
     );
 }
@@ -47,5 +53,5 @@ const tree = parser.program();
 const visitor = new ReactScriptTranspiler();
 const out = visitor.visit(tree);
 
-console.log("------------------")
-console.log(out)
+console.log('------------------');
+console.log(out);
